@@ -6,10 +6,11 @@ from googletrans import Translator
 from io import BytesIO
 from PIL import Image, ImageDraw, ImageFont
 import asyncio
+import os
 
 translator = Translator()
 
-TOKEN = "MTI5NjMwMzgwODI5NjY0ODcyNQ.GxMRBb.8asVs3G2p1F1t-yN97LHWVxoB_U6BVckXWU00E"
+TOKEN = os.environ['DISCORD_TOKEN']
 CHANNEL_ID = 701445252384424051
 
 intents = discord.Intents.default()
