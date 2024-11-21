@@ -23,6 +23,13 @@ def save_pets(data):
     with open("pets.json", "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
+#判斷是否升級
+def experienceCal(pet):
+    if pet["experience"] >= 100:
+        pet["level"] += pet["experience"] // 100
+        pet["experience"] = pet["experience"] - ((pet["experience"] // 100) * 100)
+    return pet
+
 # 創建專屬寵物
 @bot.command()
 async def create(ctx, name: str):
