@@ -33,8 +33,8 @@ async def create(ctx, name: str):
     else:
         pets[user_id] = {
             "name": name,
-            "hunger": 100,
-            "mood": 100,
+            "hunger": 80,
+            "mood": 80,
             "level": 1,
             "experience": 0
         }
@@ -49,15 +49,14 @@ async def status(ctx):
     if user_id in pets:
         pet = pets[user_id]
         await ctx.send(
-            f"{ctx.author.mention} 你的專屬寵物狀態：\n"
-            f"名稱：{pet['name']}\n"
+            f"{ctx.author.mention} {pet['name']}狀態：\n"
             f"飢餓值：{pet['hunger']}\n"
             f"心情值：{pet['mood']}\n"
             f"等級：{pet['level']}\n"
             f"經驗值：{pet['experience']}"
         )
     else:
-        await ctx.send(f"{ctx.author.mention} 你還沒有專屬寵物！使用 `!create [寵物名稱]` 來創建一隻吧！")
+        await ctx.send(f"{ctx.author.mention} 你還沒有專屬寵物！使用 `/create [寵物名稱]` 來創建一隻吧！")
 
 # 餵食寵物
 @bot.command()
@@ -67,12 +66,17 @@ async def feed(ctx):
     if user_id in pets:
         pet = pets[user_id]
         pet["hunger"] += 10
-        if pet["hunger"] > 100:
-            pet["hunger"] = 100
+        if pet["hunger"] > 150:
+            pet["hunger"] = 150 
         save_pets(pets)
-        await ctx.send(f"{ctx.author.mention} 你餵食了你的寵物 {pet['name']}，飢餓值增加了！")
+        if pet["hunger"] < 100:
+            await ctx.send(f"{ctx.author.mention} 你餵食了 {pet['name']}，飢餓值增加了！")
+        elif pet["hunger"] < 150:
+            await ctx.send(f"{ctx.author.mention} {pet['name']} 有點太飽了")
+        elif pet["hunger"] == 150:
+            await ctx.send(f"{ctx.author.mention} {pet['name']} 再吃就要炸了！")
     else:
-        await ctx.send(f"{ctx.author.mention} 你還沒有專屬寵物！使用 `!create [寵物名稱]` 來創建一隻吧！")
+        await ctx.send(f"{ctx.author.mention} 你還沒有專屬寵物！使用 `/create [寵物名稱]` 來創建一隻吧！")
 
 # 撫摸寵物增加心情值
 @bot.command()
@@ -85,9 +89,9 @@ async def pet(ctx):
         if pet["mood"] > 100:
             pet["mood"] = 100
         save_pets(pets)
-        await ctx.send(f"{ctx.author.mention} 你撫摸了你的寵物 {pet['name']}，心情值增加了！")
+        await ctx.send(f"{ctx.author.mention} 你撫摸了 {pet['name']}，{pet['name']} 覺得開心！")
     else:
-        await ctx.send(f"{ctx.author.mention} 你還沒有專屬寵物！使用 `!create [寵物名稱]` 來創建一隻吧！")
+        await ctx.send(f"{ctx.author.mention} 你還沒有專屬寵物！使用 `/create [寵物名稱]` 來創建一隻吧！")
 
 # 啟動 Bot
 bot.run("YOUR_BOT_TOKEN")
