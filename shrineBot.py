@@ -10,7 +10,7 @@ import os
 
 translator = Translator()
 
-TOKEN = os.environ['DISCORD_TOKEN']
+TOKEN = "MTI5NjMwMzgwODI5NjY0ODcyNQ.GxMRBb.8asVs3G2p1F1t-yN97LHWVxoB_U6BVckXWU00E"
 CHANNEL_ID = 701445252384424051
 
 intents = discord.Intents.default()
