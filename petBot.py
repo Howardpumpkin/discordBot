@@ -3,10 +3,14 @@ from discord.ext import commands
 import json
 import os
 
+TOKEN = "MTMwOTA0Mjg4MzUwMzg1MzU3OA.GeIFqW.6nGAtnY7FZ2bB0bbzLHKHtn2xF2yWlHRiS_YUA"
+CHANNEL_ID = 1309012372756631584
+
 # Bot 初始化
 intents = discord.Intents.default()
 intents.messages = True
-bot = commands.Bot(command_prefix="/", intents=intents)
+intents.message_content = True
+bot = commands.Bot(command_prefix="!", intents=intents)
 
 # 檢查檔案是否存在
 if not os.path.exists("pets.json"):
@@ -25,14 +29,23 @@ def save_pets(data):
 
 #判斷是否升級
 def experienceCal(pet):
-    if pet["experience"] >= 100:
-        pet["level"] += pet["experience"] // 100
-        pet["experience"] = pet["experience"] - ((pet["experience"] // 100) * 100)
+    while pet["experience"] >= 100:
+        pet["level"] += 1
+        pet["experience"] -= 100
     return pet
+
+def channel_check(ctx):
+    if ctx.channel.id != CHANNEL_ID:
+        return False
+    return True
 
 # 創建專屬寵物
 @bot.command()
 async def create(ctx, name: str):
+    if not channel_check(ctx):
+        await ctx.send(f"{ctx.author.mention} 此指令只能在指定的頻道中使用！")
+        return
+
     pets = load_pets()
     user_id = str(ctx.author.id)
     if user_id in pets:
@@ -51,6 +64,10 @@ async def create(ctx, name: str):
 # 查看寵物狀態
 @bot.command()
 async def status(ctx):
+    if not channel_check(ctx):
+        await ctx.send(f"{ctx.author.mention} 此指令只能在指定的頻道中使用！")
+        return
+
     pets = load_pets()
     user_id = str(ctx.author.id)
     if user_id in pets:
@@ -63,7 +80,7 @@ async def status(ctx):
             f"經驗值：{pet['experience']}"
         )
     else:
-        await ctx.send(f"{ctx.author.mention} 你還沒有專屬寵物！使用 `/create [寵物名稱]` 來創建一隻吧！")
+        await ctx.send(f"{ctx.author.mention} 你還沒有專屬寵物！使用 `!create [寵物名稱]` 來創建一隻吧！")
 
 # 餵食寵物
 @bot.command()
@@ -83,11 +100,15 @@ async def feed(ctx):
         elif pet["hunger"] == 150:
             await ctx.send(f"{ctx.author.mention} {pet['name']} 再吃就要炸了！")
     else:
-        await ctx.send(f"{ctx.author.mention} 你還沒有專屬寵物！使用 `/create [寵物名稱]` 來創建一隻吧！")
+        await ctx.send(f"{ctx.author.mention} 你還沒有專屬寵物！使用 /create [寵物名稱] 來創建一隻吧！")
 
 # 撫摸寵物增加心情值
 @bot.command()
 async def pet(ctx):
+    if not channel_check(ctx):
+        await ctx.send(f"{ctx.author.mention} 此指令只能在指定的頻道中使用！")
+        return
+
     pets = load_pets()
     user_id = str(ctx.author.id)
     if user_id in pets:
@@ -98,7 +119,7 @@ async def pet(ctx):
         save_pets(pets)
         await ctx.send(f"{ctx.author.mention} 你撫摸了 {pet['name']}，{pet['name']} 覺得開心！")
     else:
-        await ctx.send(f"{ctx.author.mention} 你還沒有專屬寵物！使用 `/create [寵物名稱]` 來創建一隻吧！")
+        await ctx.send(f"{ctx.author.mention} 你還沒有專屬寵物！使用 `!create [寵物名稱]` 來創建一隻吧！")
 
 # 啟動 Bot
-bot.run("YOUR_BOT_TOKEN")
+bot.run(TOKEN)
