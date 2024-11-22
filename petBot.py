@@ -24,10 +24,10 @@ def save_pets(data):
         json.dump(data, f, ensure_ascii=False, indent=4)
 
 #判斷是否升級
-def experienceCal(pet):
-    if pet["experience"] >= 100:
-        pet["level"] += pet["experience"] // 100
-        pet["experience"] = pet["experience"] - ((pet["experience"] // 100) * 100)
+def levelUp(pet):
+    while pet["experience"] >= 100:
+        pet["level"] += 1
+        pet["experience"] -= 100
     return pet
 
 # 創建專屬寵物
@@ -48,7 +48,7 @@ async def create(ctx, name: str):
         save_pets(pets)
         await ctx.send(f"{ctx.author.mention} 成功創建了你的專屬寵物：{name}！快來照顧它吧！")
 
-# 查看寵物狀態
+# 查看寵物數據
 @bot.command()
 async def status(ctx):
     pets = load_pets()
@@ -56,7 +56,7 @@ async def status(ctx):
     if user_id in pets:
         pet = pets[user_id]
         await ctx.send(
-            f"{ctx.author.mention} {pet['name']}狀態：\n"
+            f"{ctx.author.mention} {pet['name']}的數據：\n"
             f"飢餓值：{pet['hunger']}\n"
             f"心情值：{pet['mood']}\n"
             f"等級：{pet['level']}\n"
