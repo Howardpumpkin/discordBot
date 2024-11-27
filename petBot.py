@@ -60,9 +60,10 @@ async def help(ctx):
     )
     embed.add_field(name="!create [寵物名稱]", value="創建一隻專屬寵物", inline=False)
     embed.add_field(name="!status", value="查看寵物的當前狀態", inline=False)
-    embed.add_field(name="!feed", value="餵食你的寵物，增加飽食度", inline=False)
-    embed.add_field(name="!pet", value="撫摸你的寵物，增加心情值", inline=False)
+    embed.add_field(name="!feed", value="餵食你的寵物，增加飽食度(飽食過低無法訓練)", inline=False)
+    embed.add_field(name="!pet", value="撫摸你的寵物，增加心情值(心情過低升等效率會下降)", inline=False)
     embed.add_field(name="!help", value="顯示此指令清單", inline=False)
+    embed.add_field(name="!train", value="訓練寵物，增加經驗值(心情和飽食會下降)", inline=False)
     embed.set_footer(text="快來照顧你的專屬寵物吧！")
     
     await ctx.send(embed=embed)
@@ -153,7 +154,7 @@ async def pet(ctx):
     else:
         await ctx.send(SYSMES["noPet"])
 
-#和寵物玩耍增加經驗值
+#訓練寵物增加經驗值
 @bot.command()
 async def train(ctx):
     if not channel_check(ctx):
@@ -164,16 +165,25 @@ async def train(ctx):
     user_id = str(ctx.author.id)
     if user_id in pets:
         pet = pets[user_id]
-        
-        # 隨機生成經驗值增加量 (5~20)
-        exp_gain = random.randint(5, 20)
-        pet["experience"] += exp_gain
-        lvTmp = pet["level"]
+        #判斷飽食是否過低
+        if pet['hunger'] <= 30:
+            await ctx.send(f'{pet['name']}:我超餓，罷工!')
+            return
+        # 隨機生成經驗值增加量，降低心情和飽食
+        if pet['mood'] <= 30:
+            exp_gain = random.randint(1, 5)
+        else:
+            exp_gain = random.randint(5, 20)
+        pet['experience'] += exp_gain
+        mood_down = random.randint(5, 20)
+        pet['mood'] -= mood_down
+        pet['hunger'] -= 10
+        lvTmp = pet['level']
         # 檢查是否升級
         pet = experienceCal(pet)
         save_pets(pets)
         await ctx.send(
-            f"你和 {pet['name']} 玩了一下！\n"
+            f"你訓練了 {pet['name']} 一下！\n"
             f"經驗值增加了 {exp_gain} 點！"
         )
         if pet['level'] != lvTmp:
