@@ -73,13 +73,14 @@ async def status(ctx):
     user_id = str(ctx.author.id)
     if user_id in pets:
         pet = pets[user_id]
-        await ctx.send(
-            f"{ctx.author.mention} {pet['name']}狀態：\n"
-            f"飢餓值：{pet['hunger']}\n"
-            f"心情值：{pet['mood']}\n"
-            f"等級：{pet['level']}\n"
-            f"經驗值：{pet['experience']}"
+        embed = discord.Embed(
+        title=f"{pet['name']} (LV.{pet['level']})"
         )
+        embed.add_field(name="飽食度", value=pet['hunger'], inline=True)
+        embed.add_field(name="心情值", value=pet['mood'], inline=True)
+        embed.add_field(name="等級", value=pet['level'], inline=True)
+        embed.add_field(name="經驗值", value=pet['experience'], inline=True)
+        await ctx.send(embed=embed)
     else:
         await ctx.send(f"{ctx.author.mention} 你還沒有專屬寵物！使用 `!create [寵物名稱]` 來創建一隻吧！")
 
