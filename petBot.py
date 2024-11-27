@@ -34,6 +34,7 @@ def experienceCal(pet):
         pet["experience"] -= 100
     return pet
 
+#判斷是否為授權頻道
 def channel_check(ctx):
     if ctx.channel.id != CHANNEL_ID:
         return False
