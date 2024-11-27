@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 import json
 import os
+import random
 
 TOKEN = "MTMwOTA0Mjg4MzUwMzg1MzU3OA.GeIFqW.6nGAtnY7FZ2bB0bbzLHKHtn2xF2yWlHRiS_YUA"
 CHANNEL_ID = 1309012372756631584
@@ -40,10 +41,19 @@ def channel_check(ctx):
         return False
     return True
 
+#系統訊息
+SYSMES = {
+    "channelWrong":"此指令只能在指定的頻道中使用！",
+    "noPet":"你還沒有專屬寵物！使用 `!create [寵物名稱]` 來創建一隻吧！"
+}
+
 #指令的程式都放在這下面
 #指令列表顯示
 @bot.command()
 async def help(ctx):
+    if not channel_check(ctx):
+        await ctx.send(SYSMES["channelWrong"])
+        return
     embed = discord.Embed(
         title="指令清單",
         description="以下是目前可用的指令：",
@@ -61,7 +71,7 @@ async def help(ctx):
 @bot.command()
 async def create(ctx, name: str):
     if not channel_check(ctx):
-        await ctx.send(f"{ctx.author.mention} 此指令只能在指定的頻道中使用！")
+        await ctx.send(SYSMES["channelWrong"])
         return
 
     pets = load_pets()
@@ -83,7 +93,7 @@ async def create(ctx, name: str):
 @bot.command()
 async def status(ctx):
     if not channel_check(ctx):
-        await ctx.send(f"{ctx.author.mention} 此指令只能在指定的頻道中使用！")
+        await ctx.send(SYSMES["channelWrong"])
         return
 
     pets = load_pets()
@@ -99,11 +109,14 @@ async def status(ctx):
         embed.add_field(name="經驗值", value=pet['experience'], inline=True)
         await ctx.send(embed=embed)
     else:
-        await ctx.send(f"{ctx.author.mention} 你還沒有專屬寵物！使用 `!create [寵物名稱]` 來創建一隻吧！")
+        await ctx.send(SYSMES["noPet"])
 
 # 餵食寵物
 @bot.command()
 async def feed(ctx):
+    if not channel_check(ctx):
+        await ctx.send(SYSMES["channelWrong"])
+        return
     pets = load_pets()
     user_id = str(ctx.author.id)
     if user_id in pets:
@@ -119,13 +132,13 @@ async def feed(ctx):
         elif pet["hunger"] == 150:
             await ctx.send(f"{ctx.author.mention} {pet['name']} 再吃就要炸了！")
     else:
-        await ctx.send(f"{ctx.author.mention} 你還沒有專屬寵物！使用 /create [寵物名稱] 來創建一隻吧！")
+        await ctx.send(SYSMES["noPet"])
 
 # 撫摸寵物增加心情值
 @bot.command()
 async def pet(ctx):
     if not channel_check(ctx):
-        await ctx.send(f"{ctx.author.mention} 此指令只能在指定的頻道中使用！")
+        await ctx.send(SYSMES["channelWrong"])
         return
 
     pets = load_pets()
@@ -138,7 +151,37 @@ async def pet(ctx):
         save_pets(pets)
         await ctx.send(f"{ctx.author.mention} 你撫摸了 {pet['name']}，{pet['name']} 覺得開心！")
     else:
-        await ctx.send(f"{ctx.author.mention} 你還沒有專屬寵物！使用 `!create [寵物名稱]` 來創建一隻吧！")
+        await ctx.send(SYSMES["noPet"])
+
+#和寵物玩耍增加經驗值
+@bot.command()
+async def train(ctx):
+    if not channel_check(ctx):
+        await ctx.send(SYSMES["channelWrong"])
+        return
+
+    pets = load_pets()
+    user_id = str(ctx.author.id)
+    if user_id in pets:
+        pet = pets[user_id]
+        
+        # 隨機生成經驗值增加量 (5~20)
+        exp_gain = random.randint(5, 20)
+        pet["experience"] += exp_gain
+        lvTmp = pet["level"]
+        # 檢查是否升級
+        pet = experienceCal(pet)
+        save_pets(pets)
+        await ctx.send(
+            f"你和 {pet['name']} 玩了一下！\n"
+            f"經驗值增加了 {exp_gain} 點！"
+        )
+        if pet['level'] != lvTmp:
+            await ctx.send(
+            f"{pet['name']} 升級了！\n"
+            )
+    else:
+        await ctx.send(SYSMES["noPet"])
 
 # 啟動 Bot
 bot.run(TOKEN)
