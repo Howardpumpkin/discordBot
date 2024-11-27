@@ -40,6 +40,23 @@ def channel_check(ctx):
         return False
     return True
 
+#指令的程式都放在這下面
+#指令列表顯示
+@bot.command()
+async def help(ctx):
+    embed = discord.Embed(
+        title="指令清單",
+        description="以下是目前可用的指令：",
+    )
+    embed.add_field(name="!create [寵物名稱]", value="創建一隻專屬寵物", inline=False)
+    embed.add_field(name="!status", value="查看寵物的當前狀態", inline=False)
+    embed.add_field(name="!feed", value="餵食你的寵物，增加飽食度", inline=False)
+    embed.add_field(name="!pet", value="撫摸你的寵物，增加心情值", inline=False)
+    embed.add_field(name="!help", value="顯示此指令清單", inline=False)
+    embed.set_footer(text="快來照顧你的專屬寵物吧！")
+    
+    await ctx.send(embed=embed)
+
 # 創建專屬寵物
 @bot.command()
 async def create(ctx, name: str):
