@@ -78,7 +78,7 @@ async def create(ctx, name: str):
     pets = load_pets()
     user_id = str(ctx.author.id)
     if user_id in pets:
-        await ctx.send(f"{ctx.author.mention} 你已經擁有一隻專屬的寵物了：{pets[user_id]['name']}！")
+        await ctx.send(f"你已經擁有一隻專屬的寵物了：{pets[user_id]['name']}！")
     else:
         pets[user_id] = {
             "name": name,
@@ -88,7 +88,7 @@ async def create(ctx, name: str):
             "experience": 0
         }
         save_pets(pets)
-        await ctx.send(f"{ctx.author.mention} 成功創建了你的專屬寵物：{name}！快來照顧它吧！")
+        await ctx.send(f"成功創建了你的專屬寵物：{name}！快來照顧它吧！")
 
 # 查看寵物狀態
 @bot.command()
@@ -127,11 +127,11 @@ async def feed(ctx):
             pet["hunger"] = 150 
         save_pets(pets)
         if pet["hunger"] < 100:
-            await ctx.send(f"{ctx.author.mention} 你餵食了 {pet['name']}，飢餓值增加了！")
+            await ctx.send(f"你餵食了 {pet['name']}，飢餓值增加了！")
         elif pet["hunger"] < 150:
-            await ctx.send(f"{ctx.author.mention} {pet['name']} 有點太飽了")
+            await ctx.send(f"{pet['name']} 有點太飽了")
         elif pet["hunger"] == 150:
-            await ctx.send(f"{ctx.author.mention} {pet['name']} 再吃就要炸了！")
+            await ctx.send(f"{pet['name']} 再吃就要炸了！")
     else:
         await ctx.send(SYSMES["noPet"])
 
@@ -150,7 +150,7 @@ async def pet(ctx):
         if pet["mood"] > 100:
             pet["mood"] = 100
         save_pets(pets)
-        await ctx.send(f"{ctx.author.mention} 你撫摸了 {pet['name']}，{pet['name']} 覺得開心！")
+        await ctx.send(f"你撫摸了 {pet['name']}，{pet['name']} 覺得開心！")
     else:
         await ctx.send(SYSMES["noPet"])
 
