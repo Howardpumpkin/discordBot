@@ -28,12 +28,47 @@ def save_pets(data):
     with open("pets.json", "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
+#加載emoji
+def load_emoji():
+    with open("emoji.json", "r", encoding="utf-8") as f:
+        return json.load(f)
+Emoji = load_emoji()
+
 #判斷是否升級
 def experienceCal(pet):
     while pet["experience"] >= 100:
         pet["level"] += 1
         pet["experience"] -= 100
     return pet
+
+#判斷心情與飽食的影響程度，回傳表情
+def hunMood_impact(pet):
+    hunger = pet['hunger']
+    mood = pet['mood']
+
+    # 計算飽食和心情的影響程度
+    hun_impact = hunger / 150 if hunger >= 100 else (150 - hunger) / 150 if hunger <= 50 else 0
+    hun_effect = 1 if hunger >= 100 else 2 if hunger <= 50 else None
+
+    mood_impact = mood / 100 if mood >= 70 else (100 - mood) / 100 if mood <= 30 else 0
+    mood_effect = 1 if mood >= 70 else 2 if mood <= 30 else None
+
+    # 判斷主要影響
+    if hun_effect and mood_effect:
+        if hun_impact > mood_impact:
+            effect_type = 'Full' if hun_effect == 1 else 'Hungry'
+        else:
+            effect_type = 'Happy' if mood_effect == 1 else 'Sad'
+    elif hun_effect:
+        effect_type = 'Full' if hun_effect == 1 else 'Hungry'
+    elif mood_effect:
+        effect_type = 'Happy' if mood_effect == 1 else 'Sad'
+    else:
+        effect_type = 'Normal'
+
+    # 返回隨機表情
+    return Emoji[effect_type][str(random.randint(1, 4))]
+    
 
 #判斷是否為授權頻道
 def channel_check(ctx):
@@ -47,37 +82,10 @@ SYSMES = {
     "noPet":"你還沒有專屬寵物！使用 `!create [寵物名稱]` 來創建一隻吧！"
 }
 
-#顏文字
-HiEmoji = {#打招呼
-    1:'(*´∇`)ﾉ Hi~',
-    2:'ヾ(≧▽≦*)o Hello!',
-    3:'( ゜▽゜)/ こんにちは',
-    4:'(づ｡◕‿‿◕｡)づ Weeee'
-}
-HungryEmoji = {
-    1:'(´･ω･`) 咕嚕～',
-    2:'(´﹃｀) 痾～',
-    3:'(๑•﹃•๑) 好餓啊...',
-    4:'(╯°Д°）╯︵腹ペコ',#肚子餓
-}
-    1:'(o´∀`o)',
-    2:'(๑´ڡ`๑)',
-    3:'(´～｀*)嗝~',
-    4:'(x_x)',#吃飽了
-    1:'(´︶`)',
-    2:'(o´▽`o)',
-    3:'Ｏ(≧▽≦)Ｏ',
-    4:'☆:.｡.o(≧▽≦)o.｡.:☆',#開心
-    1:
-    2:
-    3:
-    4:
-}
-
 #指令的程式都放在這下面
 #指令列表顯示
 @bot.command()
-async def help(ctx):
+async def helpInfo(ctx):
     if not channel_check(ctx):
         await ctx.send(SYSMES["channelWrong"])
         return
@@ -89,7 +97,7 @@ async def help(ctx):
     embed.add_field(name="!status", value="查看寵物的當前狀態", inline=False)
     embed.add_field(name="!feed", value="餵食你的寵物，增加飽食度(飽食過低無法訓練)", inline=False)
     embed.add_field(name="!pet", value="撫摸你的寵物，增加心情值(心情過低升等效率會下降)", inline=False)
-    embed.add_field(name="!help", value="顯示此指令清單", inline=False)
+    embed.add_field(name="!helpInfo", value="顯示此指令清單", inline=False)
     embed.add_field(name="!train", value="訓練寵物，增加經驗值(心情和飽食會下降)", inline=False)
     embed.set_footer(text="快來照顧你的專屬寵物吧！")
     
@@ -117,7 +125,7 @@ async def create(ctx, name: str):
         save_pets(pets)
         emojCount = random.randint(1,4)
         await ctx.send(f"成功創建了你的專屬寵物：{name}！快來照顧它吧！")
-        await ctx.send(f"{emoji[emojCount]}")
+        await ctx.send(f"{Emoji['Hi'][str(emojCount)]}")
 
 # 查看寵物數據
 @bot.command()
@@ -137,6 +145,7 @@ async def status(ctx):
         embed.add_field(name="心情值", value=pet['mood'], inline=True)
         embed.add_field(name="等級", value=pet['level'], inline=True)
         embed.add_field(name="經驗值", value=pet['experience'], inline=True)
+        embed.add_field(name="", value=hunMood_impact(pet), inline=False)
         await ctx.send(embed=embed)
     else:
         await ctx.send(SYSMES["noPet"])
