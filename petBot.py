@@ -90,8 +90,7 @@ async def helpInfo(ctx):
         await ctx.send(SYSMES["channelWrong"])
         return
     embed = discord.Embed(
-        title="指令清單",
-        description="以下是目前可用的指令：",
+        title="指令清單"
     )
     embed.add_field(name="!create [寵物名稱]", value="創建一隻專屬寵物", inline=False)
     embed.add_field(name="!status", value="查看寵物的當前狀態", inline=False)
@@ -99,7 +98,7 @@ async def helpInfo(ctx):
     embed.add_field(name="!pet", value="撫摸你的寵物，增加心情值(心情過低升等效率會下降)", inline=False)
     embed.add_field(name="!helpInfo", value="顯示此指令清單", inline=False)
     embed.add_field(name="!train", value="訓練寵物，增加經驗值(心情和飽食會下降)", inline=False)
-    embed.set_footer(text="快來照顧你的專屬寵物吧！")
+    embed.add_field(name="!rename [新的名字]", value="重新命名寵物", inline=False)
     
     await ctx.send(embed=embed)
 
@@ -127,6 +126,23 @@ async def create(ctx, name: str):
         await ctx.send(f"成功創建了你的專屬寵物：{name}！快來照顧它吧！")
         await ctx.send(f"{Emoji['Hi'][str(emojCount)]}")
 
+#重新命名寵物
+@bot.command()
+async def rename(ctx, name: str):
+    if not channel_check(ctx):
+        await ctx.send(SYSMES["channelWrong"])
+        return
+    pets = load_pets()
+    user_id = str(ctx.author.id)
+    if user_id in pets:
+        pet = pets[user_id]
+        prevname = pet['name']
+        pet['name'] = name
+        save_pets(pets)
+        await ctx.send(f"{prevname} 已成功改名為: {pet['name']}")
+    else:
+        await ctx.send(SYSMES["noPet"])
+    
 # 查看寵物數據
 @bot.command()
 async def status(ctx):
@@ -165,11 +181,11 @@ async def feed(ctx):
             pet["hunger"] = 150 
         save_pets(pets)
         if pet["hunger"] < 100:
-            await ctx.send(f"你餵食了 {pet['name']}，飢餓值增加了！")
+            await ctx.send(Emoji['Full'][str(random.randint(1, 4))])
         elif pet["hunger"] < 150:
-            await ctx.send(f"{pet['name']} 有點太飽了")
-        elif pet["hunger"] == 150:
-            await ctx.send(f"{pet['name']} 再吃就要炸了！")
+            await ctx.send(f"{Emoji['Full'][str(random.randint(1, 4))]} 快要炸了~")
+        else:
+            await ctx.send(Emoji['Explode'])
     else:
         await ctx.send(SYSMES["noPet"])
 
@@ -188,7 +204,7 @@ async def pet(ctx):
         if pet["mood"] > 100:
             pet["mood"] = 100
         save_pets(pets)
-        await ctx.send(f"你撫摸了 {pet['name']}，{pet['name']} 覺得開心！")
+        await ctx.send(Emoji['Happy'][str(random.randint(1, 4))])
     else:
         await ctx.send(SYSMES["noPet"])
 
@@ -205,7 +221,7 @@ async def train(ctx):
         pet = pets[user_id]
         #判斷飽食是否過低
         if pet['hunger'] <= 30:
-            await ctx.send(f'{pet['name']}:我超餓，罷工!')
+            await ctx.send(Emoji['Hungry'][str(random.randint(1, 4))])
             return
         # 隨機生成經驗值增加量，降低心情和飽食
         if pet['mood'] <= 30:
@@ -221,12 +237,12 @@ async def train(ctx):
         pet = experienceCal(pet)
         save_pets(pets)
         await ctx.send(
-            f"你訓練了 {pet['name']} 一下！\n"
+            f"{Emoji['Train'][str(random.randint(1, 4))]}\n"
             f"經驗值增加了 {exp_gain} 點！"
         )
         if pet['level'] != lvTmp:
             await ctx.send(
-            f"{pet['name']} 升級了！\n"
+            f"{Emoji['LVup']} 升級了！\n"
             )
     else:
         await ctx.send(SYSMES["noPet"])

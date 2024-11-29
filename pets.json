@@ -1,9 +1,9 @@
 {
     "547369768769028096": {
-        "name": "test",
-        "hunger": 90,
-        "mood": 26,
-        "level": 1,
-        "experience": 76
+        "name": "pump",
+        "hunger": 110,
+        "mood": 32,
+        "level": 2,
+        "experience": 8
     }
 }
