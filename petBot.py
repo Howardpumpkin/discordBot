@@ -5,7 +5,6 @@ import os
 import random
 
 TOKEN = "MTMwOTA0Mjg4MzUwMzg1MzU3OA.GeIFqW.6nGAtnY7FZ2bB0bbzLHKHtn2xF2yWlHRiS_YUA"
-CHANNEL_ID = 1309012372756631584
 
 # Bot 初始化
 intents = discord.Intents.default()
@@ -33,6 +32,21 @@ def load_emoji():
     with open("emoji.json", "r", encoding="utf-8") as f:
         return json.load(f)
 Emoji = load_emoji()
+
+#加載授權頻道
+with open("channel.json", "r", encoding="utf-8") as f:
+    CHANNEL_LIST = json.load(f)
+
+#保存授權頻道
+def save_channel(data):
+    with open("channel.json", "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+
+#判斷是否為授權頻道
+def channel_check(ctx):
+    if ctx.channel.id not in CHANNEL_LIST:
+        return False
+    return True
 
 #判斷是否升級
 def experienceCal(pet):
@@ -68,13 +82,6 @@ def hunMood_impact(pet):
 
     # 返回隨機表情
     return Emoji[effect_type][str(random.randint(1, 4))]
-    
-
-#判斷是否為授權頻道
-def channel_check(ctx):
-    if ctx.channel.id != CHANNEL_ID:
-        return False
-    return True
 
 #系統訊息
 SYSMES = {
@@ -99,8 +106,30 @@ async def helpInfo(ctx):
     embed.add_field(name="!helpInfo", value="顯示此指令清單", inline=False)
     embed.add_field(name="!train", value="訓練寵物，增加經驗值(心情和飽食會下降)", inline=False)
     embed.add_field(name="!rename [新的名字]", value="重新命名寵物", inline=False)
+    embed.add_field(name="!activate", value="在此頻道上開啟寵物功能", inline=False)
+    embed.add_field(name="!deactivate", value="在此頻道上關閉寵物功能", inline=False)
     
     await ctx.send(embed=embed)
+
+#在頻道上開啟寵物機器人
+@bot.command()
+async def activate(ctx):
+    if not channel_check(ctx):
+        CHANNEL_LIST.append(ctx.channel.id)
+        save_channel(CHANNEL_LIST)
+        await ctx.send(f"寵物功能已新增至 {ctx.channel.name}")
+    else:
+        await ctx.send(f"{ctx.channel.name} 已經開啟過寵物功能")
+
+#在頻道上關閉寵物機器人功能
+@bot.command()
+async def deactivate(ctx):
+    if channel_check(ctx):
+        CHANNEL_LIST.remove(ctx.channel.id)
+        save_channel(CHANNEL_LIST)
+        await ctx.send(f"寵物功能已從 {ctx.channel.name} 關閉")
+    else:
+        await ctx.send(f"{ctx.channel.name} 未開啟寵物功能")
 
 # 創建專屬寵物
 @bot.command()
