@@ -47,6 +47,33 @@ SYSMES = {
     "noPet":"你還沒有專屬寵物！使用 `!create [寵物名稱]` 來創建一隻吧！"
 }
 
+#顏文字
+HiEmoji = {#打招呼
+    1:'(*´∇`)ﾉ Hi~',
+    2:'ヾ(≧▽≦*)o Hello!',
+    3:'( ゜▽゜)/ こんにちは',
+    4:'(づ｡◕‿‿◕｡)づ Weeee'
+}
+HungryEmoji = {
+    1:'(´･ω･`) 咕嚕～',
+    2:'(´﹃｀) 痾～',
+    3:'(๑•﹃•๑) 好餓啊...',
+    4:'(╯°Д°）╯︵腹ペコ',#肚子餓
+}
+    1:'(o´∀`o)',
+    2:'(๑´ڡ`๑)',
+    3:'(´～｀*)嗝~',
+    4:'(x_x)',#吃飽了
+    1:'(´︶`)',
+    2:'(o´▽`o)',
+    3:'Ｏ(≧▽≦)Ｏ',
+    4:'☆:.｡.o(≧▽≦)o.｡.:☆',#開心
+    1:
+    2:
+    3:
+    4:
+}
+
 #指令的程式都放在這下面
 #指令列表顯示
 @bot.command()
@@ -88,7 +115,9 @@ async def create(ctx, name: str):
             "experience": 0
         }
         save_pets(pets)
+        emojCount = random.randint(1,4)
         await ctx.send(f"成功創建了你的專屬寵物：{name}！快來照顧它吧！")
+        await ctx.send(f"{emoji[emojCount]}")
 
 # 查看寵物數據
 @bot.command()
