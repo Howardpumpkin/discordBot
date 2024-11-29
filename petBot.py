@@ -89,6 +89,75 @@ SYSMES = {
     "noPet":"你還沒有專屬寵物！使用 `!create [寵物名稱]` 來創建一隻吧！"
 }
 
+#status指令的按鈕
+class StatusView(discord.ui.View):
+    def __init__(self, ctx, pet, user_id, pets):
+        super().__init__(timeout=None)
+        self.ctx = ctx
+        self.pet = pet
+        self.user_id = user_id
+        self.pets = pets
+
+    async def send_new_status(self, ctx, emoji):
+        embed = discord.Embed(
+            title=f"{self.pet['name']}       {emoji}",
+            color=discord.Color.blue()
+        )
+        embed.add_field(name="飽食度", value=self.pet['hunger'], inline=True)
+        embed.add_field(name="心情值", value=self.pet['mood'], inline=True)
+        embed.add_field(name="等級", value=self.pet['level'], inline=True)
+        embed.add_field(name="經驗值", value=self.pet['experience'], inline=True)
+
+        view = StatusView(ctx, self.pet, self.user_id, self.pets)
+        await ctx.send(embed=embed, view=view)
+
+    @discord.ui.button(label="餵食", style=discord.ButtonStyle.green)
+    async def feed_button(self, button: discord.ui.Button, interaction: discord.Interaction):
+        self.pet["hunger"] += 10
+        if self.pet["hunger"] > 150:
+            self.pet["hunger"] = 150
+        save_pets(self.pets)
+        if self.pet["hunger"] < 100:
+            emoji = Emoji['Full'][str(random.randint(1, 4))]
+        elif self.pet["hunger"] < 150:
+            emoji = f"{Emoji['Full'][str(random.randint(1, 4))]} 快要炸了~"
+        else:
+            emoji = Emoji['Explode']
+        await self.send_new_status(self.ctx,emoji)
+
+    @discord.ui.button(label="撫摸", style=discord.ButtonStyle.blurple)
+    async def pet_button(self, button: discord.ui.Button, interaction: discord.Interaction):
+        self.pet["mood"] += 10
+        if self.pet["mood"] > 100:
+            self.pet["mood"] = 100
+        save_pets(self.pets)
+        if self.pet["mood"] < 30:
+            emoji = Emoji['Sad'][str(random.randint(1, 4))]
+        elif self.pet["mood"] < 70:
+            emoji = Emoji['Normal'][str(random.randint(1, 4))]
+        else:
+            emoji = Emoji['Happy'][str(random.randint(1, 4))]
+        await self.send_new_status(self.ctx,emoji)
+
+    @discord.ui.button(label="訓練", style=discord.ButtonStyle.red)
+    async def train_button(self, button: discord.ui.Button, interaction: discord.Interaction):
+        if self.pet['hunger'] <= 30:
+            emoji = Emoji['Hungry'][str(random.randint(1, 4))]
+        else:
+            exp_gain = random.randint(1, 5) if self.pet['mood'] <= 30 else random.randint(5, 20)
+            self.pet['experience'] += exp_gain
+            mood_down = random.randint(5, 20)
+            self.pet['mood'] = max(0, self.pet['mood'] - mood_down)
+            self.pet['hunger'] = max(0, self.pet['hunger'] - 10)
+            lvTmp = self.pet['level']
+            self.pet = experienceCal(self.pet)
+            save_pets(self.pets)
+            if self.pet['level'] != lvTmp:
+                emoji = Emoji['Train'][str(random.randint(1, 4))] + " " + Emoji['LVup']
+            else:
+                emoji = Emoji['Train'][str(random.randint(1, 4))]
+        await self.send_new_status(self.ctx,emoji)
+
 #指令的程式都放在這下面
 #指令列表顯示
 @bot.command()
@@ -101,19 +170,21 @@ async def helpInfo(ctx):
     )
     embed.add_field(name="!create [寵物名稱]", value="創建一隻專屬寵物", inline=False)
     embed.add_field(name="!status", value="查看寵物的當前狀態", inline=False)
-    embed.add_field(name="!feed", value="餵食你的寵物，增加飽食度(飽食過低無法訓練)", inline=False)
-    embed.add_field(name="!pet", value="撫摸你的寵物，增加心情值(心情過低升等效率會下降)", inline=False)
     embed.add_field(name="!helpInfo", value="顯示此指令清單", inline=False)
-    embed.add_field(name="!train", value="訓練寵物，增加經驗值(心情和飽食會下降)", inline=False)
     embed.add_field(name="!rename [新的名字]", value="重新命名寵物", inline=False)
-    embed.add_field(name="!activate", value="在此頻道上開啟寵物功能", inline=False)
-    embed.add_field(name="!deactivate", value="在此頻道上關閉寵物功能", inline=False)
+    embed.add_field(name="!activate", value="在此頻道上開啟寵物功能(僅頻道管理者可用)", inline=False)
+    embed.add_field(name="!deactivate", value="在此頻道上關閉寵物功能(僅頻道管理者可用)", inline=False)
     
     await ctx.send(embed=embed)
 
 #在頻道上開啟寵物機器人
 @bot.command()
 async def activate(ctx):
+    # 檢查權限
+    if not ctx.author.guild_permissions.manage_channels:
+        await ctx.send(f"{ctx.author.mention} 你沒有權限執行此指令！")
+        return
+
     if not channel_check(ctx):
         CHANNEL_LIST.append(ctx.channel.id)
         save_channel(CHANNEL_LIST)
@@ -121,9 +192,14 @@ async def activate(ctx):
     else:
         await ctx.send(f"{ctx.channel.name} 已經開啟過寵物功能")
 
-#在頻道上關閉寵物機器人功能
+# 在頻道上關閉寵物機器人功能
 @bot.command()
 async def deactivate(ctx):
+    # 檢查權限
+    if not ctx.author.guild_permissions.manage_channels:
+        await ctx.send(f"{ctx.author.mention} 你沒有權限執行此指令！")
+        return
+
     if channel_check(ctx):
         CHANNEL_LIST.remove(ctx.channel.id)
         save_channel(CHANNEL_LIST)
@@ -184,95 +260,14 @@ async def status(ctx):
     if user_id in pets:
         pet = pets[user_id]
         embed = discord.Embed(
-        title=f"{pet['name']} (LV.{pet['level']})"
+            title=f"{pet['name']}       {hunMood_impact(pet)}"
         )
         embed.add_field(name="飽食度", value=pet['hunger'], inline=True)
         embed.add_field(name="心情值", value=pet['mood'], inline=True)
         embed.add_field(name="等級", value=pet['level'], inline=True)
         embed.add_field(name="經驗值", value=pet['experience'], inline=True)
-        embed.add_field(name="", value=hunMood_impact(pet), inline=False)
-        await ctx.send(embed=embed)
-    else:
-        await ctx.send(SYSMES["noPet"])
-
-# 餵食寵物
-@bot.command()
-async def feed(ctx):
-    if not channel_check(ctx):
-        await ctx.send(SYSMES["channelWrong"])
-        return
-    pets = load_pets()
-    user_id = str(ctx.author.id)
-    if user_id in pets:
-        pet = pets[user_id]
-        pet["hunger"] += 10
-        if pet["hunger"] > 150:
-            pet["hunger"] = 150 
-        save_pets(pets)
-        if pet["hunger"] < 100:
-            await ctx.send(Emoji['Full'][str(random.randint(1, 4))])
-        elif pet["hunger"] < 150:
-            await ctx.send(f"{Emoji['Full'][str(random.randint(1, 4))]} 快要炸了~")
-        else:
-            await ctx.send(Emoji['Explode'])
-    else:
-        await ctx.send(SYSMES["noPet"])
-
-# 撫摸寵物增加心情值
-@bot.command()
-async def pet(ctx):
-    if not channel_check(ctx):
-        await ctx.send(SYSMES["channelWrong"])
-        return
-
-    pets = load_pets()
-    user_id = str(ctx.author.id)
-    if user_id in pets:
-        pet = pets[user_id]
-        pet["mood"] += 10
-        if pet["mood"] > 100:
-            pet["mood"] = 100
-        save_pets(pets)
-        await ctx.send(Emoji['Happy'][str(random.randint(1, 4))])
-    else:
-        await ctx.send(SYSMES["noPet"])
-
-#訓練寵物增加經驗值
-@bot.command()
-async def train(ctx):
-    if not channel_check(ctx):
-        await ctx.send(SYSMES["channelWrong"])
-        return
-
-    pets = load_pets()
-    user_id = str(ctx.author.id)
-    if user_id in pets:
-        pet = pets[user_id]
-        #判斷飽食是否過低
-        if pet['hunger'] <= 30:
-            await ctx.send(Emoji['Hungry'][str(random.randint(1, 4))])
-            return
-        # 隨機生成經驗值增加量，降低心情和飽食
-        if pet['mood'] <= 30:
-            exp_gain = random.randint(1, 5)
-        else:
-            exp_gain = random.randint(5, 20)
-        pet['experience'] += exp_gain
-        mood_down = random.randint(5, 20)
-        pet['mood'] -= mood_down
-        pet['hunger'] -= 10
-        lvTmp = pet['level']
-        # 檢查是否升級
-        pet = experienceCal(pet)
-        save_pets(pets)
-        await ctx.send(
-            f"{Emoji['Train'][str(random.randint(1, 4))]}\n"
-            f"經驗值增加了 {exp_gain} 點！"
-        )
-        if pet['level'] != lvTmp:
-            await ctx.send(
-            f"{Emoji['LVup']} 升級了！\n"
-            )
+        view = StatusView(ctx, pet, user_id, pets)
+        await ctx.send(embed=embed, view=view)
     else:
         await ctx.send(SYSMES["noPet"])
 

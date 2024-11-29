@@ -1,9 +1,9 @@
 {
     "547369768769028096": {
         "name": "pump",
-        "hunger": 110,
-        "mood": 32,
+        "hunger": 100,
+        "mood": 84,
         "level": 2,
-        "experience": 8
+        "experience": 52
     }
 }
