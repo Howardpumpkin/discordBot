@@ -10,7 +10,15 @@ import os
 
 translator = Translator()
 
-TOKEN = "MTI5NjMwMzgwODI5NjY0ODcyNQ.GxMRBb.8asVs3G2p1F1t-yN97LHWVxoB_U6BVckXWU00E"
+def getKey(keyword): #從Keys文件讀取金鑰或token
+    with open('token.txt', 'r') as file:
+        key = f"{keyword}:"
+        for line in file:
+            if key in line:
+                pos = line.find(key)
+                return line[pos + len(key):].strip()
+
+TOKEN = getKey("shrineBot")
 CHANNEL_ID = 701445252384424051
 
 intents = discord.Intents.default()
